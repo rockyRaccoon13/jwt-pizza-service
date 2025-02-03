@@ -21,7 +21,7 @@ test("login existing user", async () => {
   expect(loginRes.body.user).toMatchObject(expectedUser);
 });
 
-test("delete", async () => {
+test("logout", async () => {
   const deleteRes = await request(app)
     .delete("/api/auth/")
     .set("Authorization", `Bearer ${testUserAuthToken}`);
