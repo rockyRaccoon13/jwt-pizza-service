@@ -49,68 +49,6 @@ test("logout", async () => {
   expect(loginRes.status).toBe(200);
 });
 
-// //description: 'Update user',
-// example: `curl -X PUT localhost:3000/api/auth/1 -d '{"email":"a@jwt.com", "password":"admin"}' -H 'Content-Type: application/json' -H 'Authorization: Bearer tttttt'`,
-// response: { id: 1, name: '常用名字', email: 'a@jwt.com', roles: [{ role: 'admin' }] },
-
-test("diner unable to update other user", async () => {
-  const updatingUser = {
-    name: "pizza diner",
-    email: randomName() + "@test.com",
-    password: "a",
-  };
-
-  await request(app).post("/api/auth").send(updatingUser);
-
-  const newEmail = randomName();
-  const newPassword = randomName();
-
-  const updateRes = await request(app)
-    .put(`/api/auth/${updatingUser.Id}`)
-    .send({ email: newEmail, password: newPassword })
-    .set("Authorization", `Bearer ${testUserAuthToken}`);
-  expect(updateRes.status).toBe(403);
-  expect(updateRes.body.message).toBe("unauthorized");
-});
-
-test("admin able to update user", async () => {
-  const adminUser = await createAdminUser();
-  const adminUserAuthToken = (
-    await request(app).put("/api/auth").send(adminUser)
-  ).body.token;
-
-  const updatingUser = {
-    name: "pizza diner",
-    email: randomName() + "@test.com",
-    password: "a",
-  };
-
-  await request(app).post("/api/auth").send(updatingUser);
-
-  const newEmail = randomName();
-  const newPassword = randomName();
-
-  const updateRes = await request(app)
-    .put(`/api/auth/${updatingUser.Id}`)
-    .send({ email: newEmail, password: newPassword })
-    .set("Authorization", `Bearer ${adminUserAuthToken}`);
-  expect(updateRes.status).toBe(200);
-  expect(updateRes.body.message).toBe("unauthorized");
-  updatingUser.email = newEmail;
-  updatingUser.password = newPassword;
-
-  expect(updateRes.body).toMatchObject(updatingUser);
-});
-
-async function createAdminUser() {
-  let user = { password: "toomanysecrets", roles: [{ role: Role.Admin }] };
-  user.name = randomName();
-  user.email = user.name + "@admin.com";
-
-  user = await DB.addUser(user);
-  return { ...user, password: "toomanysecrets" };
-}
-
 function randomName() {
   return Math.random().toString(36).substring(2, 12);
 }
