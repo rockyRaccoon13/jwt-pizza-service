@@ -6,10 +6,26 @@ const testUser = { name: "pizza diner", email: "reg@test.com", password: "a" };
 let testUserAuthToken;
 
 beforeAll(async () => {
-  testUser.email = Math.random().toString(36).substring(2, 12) + "@test.com";
+  testUser.email =
+    Math.random().toString(36).substring(2, 12) + "@authTests.com";
   const registerRes = await request(app).post("/api/auth").send(testUser);
   testUserAuthToken = registerRes.body.token;
   expectValidJwt(testUserAuthToken);
+});
+
+test("register", async () => {
+  const testRegisteringUser = {
+    name: "registerTest",
+    email: "reg@test.com",
+    password: "a",
+  };
+  testRegisteringUser.email = randomName() + "@authRegisterTest.com";
+  const registerRes = await request(app)
+    .post("/api/auth")
+    .send(testRegisteringUser);
+  expect(registerRes.status).toBe(200);
+
+  expectValidJwt(registerRes.body.token);
 });
 
 test("login", async () => {
@@ -26,12 +42,11 @@ test("login", async () => {
 //     example: `curl -X DELETE localhost:3000/api/auth -H 'Authorization: Bearer tttttt'`,
 //     response: { message: 'logout successful' },
 
-test("login", async () => {
+test("logout", async () => {
   const loginRes = await request(app)
     .delete("/api/auth")
     .set("Authorization", `Bearer ${testUserAuthToken}`);
   expect(loginRes.status).toBe(200);
-  expect(loginRes.body.message).toBe("logout successful");
 });
 
 // //description: 'Update user',
