@@ -63,3 +63,26 @@ test("addMenuItem", async () => {
     expect.arrayContaining([expect.objectContaining(newMenuItem)])
   );
 });
+
+test("getMenu", async () => {
+  // add menu item
+  const menuItem = {
+    title: "testPizza",
+    description: randomName(),
+    image: "random.png",
+    price: 0.1234,
+  };
+
+  const addMenuItemRes = await request(app)
+    .put("/api/order/menu")
+    .send(menuItem)
+    .set("Authorization", `Bearer ${testAdmin_AuthToken}`);
+  expect(addMenuItemRes.status).toBe(200);
+
+  //TEST get menu
+  const getMenuRes = await request(app).get("/api/order/menu");
+  expect(getMenuRes.status).toBe(200);
+  expect(getMenuRes.body).toEqual(
+    expect.arrayContaining([expect.objectContaining(menuItem)])
+  );
+});
