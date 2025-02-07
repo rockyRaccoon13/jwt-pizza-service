@@ -37,6 +37,7 @@ function randomName() {
 async function createTestFranchisee() {
   registeredTestFranchisee.email =
     Math.random().toString(36).substring(2, 12) + "@testFranchisee.com";
+
   const registerRes = await request(app)
     .post("/api/auth")
     .send(registeredTestFranchisee);
@@ -45,8 +46,11 @@ async function createTestFranchisee() {
 }
 
 async function createTestDiner() {
+  //mock diner email
   registeredTestDiner.email =
     Math.random().toString(36).substring(2, 12) + "@testDiner.com";
+
+  //register diner to get authtoken
   const registerRes = await request(app)
     .post("/api/auth")
     .send(registeredTestDiner);
@@ -55,12 +59,15 @@ async function createTestDiner() {
 }
 
 async function createAdminUser() {
+  //mock admin user
   let user = { password: "toomanysecrets", roles: [{ role: Role.Admin }] };
   user.name = randomName();
   user.email = user.name + "@admin.com";
 
+  //add user to db
   user = await DB.addUser(user);
 
+  //login user to get authtoken
   const loginRes = await request(app)
     .put("/api/auth")
     .send({ email: user.email, password: "toomanysecrets" });
@@ -87,8 +94,7 @@ describe("createFranchise", () => {
     // check response status
     expect(response.status).toBe(200);
 
-    // check return object
-
+    // check return object structure
     expect(response.body).toEqual(
       expect.objectContaining({
         name: expect.any(String),
@@ -103,7 +109,7 @@ describe("createFranchise", () => {
       })
     );
 
-    // check return object values
+    // check return object values match request data
     expect(response.body.name).toBe(testFranchiseData.name);
     expect(response.body.admins[0].email).toBe(
       testFranchiseData.admins[0].email
@@ -144,6 +150,8 @@ describe("createFranchise", () => {
 test("getFranchises", async () => {
   const response = await request(app).get("/api/franchise");
   expect(response.status).toBe(200);
+
+  // check return object structure
   expect(response.body).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
@@ -162,7 +170,7 @@ test("getFranchises", async () => {
 
 describe("deleteFranchise", () => {
   test("200 - admin successfully creates store", async () => {
-    // mock a franchise
+    // create a franchise
     const testFranchiseData = {
       name: "testFranchise-" + randomName(),
       admins: [{ email: registeredTestFranchisee.email }],
@@ -251,7 +259,7 @@ describe("createStore", () => {
       })
     );
 
-    // check response json object values
+    // check response to match req data
     expect(response.body.name).toBe(testStoreData.name);
     expect(response.body.franchiseId).toBe(testStoreData.franchiseId);
   });
