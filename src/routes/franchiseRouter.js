@@ -43,7 +43,7 @@ franchiseRouter.endpoints = [
     requiresAuth: true,
     description: 'Create a new franchise store',
     example: `curl -X POST localhost:3000/api/franchise/1/store -H 'Content-Type: application/json' -d '{"franchiseId": 1, "name":"SLC"}' -H 'Authorization: Bearer tttttt'`,
-    response: { id: 1, name: 'SLC', totalRevenue: 0 },
+    response: { id: 1, name: 'SLC', totalRevenue: 0 },  // I think this is wrong !!! see my tests
   },
   {
     method: 'DELETE',
