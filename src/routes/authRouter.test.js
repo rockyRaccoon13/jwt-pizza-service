@@ -1,6 +1,5 @@
 const request = require("supertest");
 const app = require("../service");
-const { Role, DB } = require("../database/database.js");
 
 const testUser = { name: "pizza diner", email: "reg@test.com", password: "a" };
 let testUserAuthToken;
@@ -37,10 +36,6 @@ test("login", async () => {
   delete expectedUser.password;
   expect(loginRes.body.user).toMatchObject(expectedUser);
 });
-
-//     description: 'Logout a user',
-//     example: `curl -X DELETE localhost:3000/api/auth -H 'Authorization: Bearer tttttt'`,
-//     response: { message: 'logout successful' },
 
 test("logout", async () => {
   const loginRes = await request(app)
