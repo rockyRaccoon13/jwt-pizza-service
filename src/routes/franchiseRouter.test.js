@@ -394,39 +394,44 @@ describe("getUserFranchises", () => {
     //       ]),
     //     })
     //   );
+
+    // check response to match request data
+    //TODO
   });
 });
 
-// test("delete Store", async () => {
-//   const testFranchiseData = {
-//     name: "testFranchiseDeleteStore-" + randomName(),
-//     admins: [{ email: registeredTestFranchisee.email }],
-//   };
+test("delete Store", async () => {
+  const testFranchiseData = {
+    name: "testFranchiseDeleteStore-" + randomName(),
+    admins: [{ email: registeredTestFranchisee.email }],
+  };
 
-//   const createFranRes = await request(app)
-//     .post("/api/franchise")
-//     .set("Content-Type", "application/json")
-//     .set("Authorization", `Bearer ${testAdmin_AuthToken}`)
-//     .send(testFranchiseData);
+  const createFranRes = await request(app)
+    .post("/api/franchise")
+    .set("Content-Type", "application/json")
+    .set("Authorization", `Bearer ${testAdmin_AuthToken}`)
+    .send(testFranchiseData);
 
-//   testFranchiseData.id = createFranRes.body.id;
+  testFranchiseData.id = createFranRes.body.id;
 
-//   const testStoreData = {
-//     franchiseId: testFranchiseData.id,
-//     name: "testStore",
-//   };
+  const testStoreData = {
+    franchiseId: testFranchiseData.id,
+    name: "testStore",
+  };
 
-//   const createStoreResponse = await request(app)
-//     .post(`/api/franchise/${testFranchiseData.id}/store`)
-//     .set("Content-Type", "application/json")
-//     .set("Authorization", `Bearer ${testAdmin_AuthToken}`)
-//     .send(testStoreData);
+  const createStoreResponse = await request(app)
+    .post(`/api/franchise/${testFranchiseData.id}/store`)
+    .set("Content-Type", "application/json")
+    .set("Authorization", `Bearer ${testAdmin_AuthToken}`)
+    .send(testStoreData);
 
-//   const storeId = createStoreResponse.body.id;
+  const storeId = createStoreResponse.body.id;
 
-//   const deleteStoreResponse = await request(app)
-//     .delete(`/api/franchise/${testFranchiseData.id}/store/${storeId}`)
-//     .set("Authorization", `Bearer ${testAdmin_AuthToken}`);
+  const deleteStoreResponse = await request(app)
+    .delete(`/api/franchise/${testFranchiseData.id}/store/${storeId}`)
+    .set("Authorization", `Bearer ${testAdmin_AuthToken}`);
 
-//   expect(deleteStoreResponse.status).toBe(200);
-// });
+  expect(deleteStoreResponse.status).toBe(200);
+
+  //TODO check store is gone when search for franchise
+});
