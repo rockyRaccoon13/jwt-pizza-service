@@ -45,7 +45,7 @@ async function createAdminUser() {
 //   response: [{ id: 1, title: 'Student', description: 'No topping, no sauce, just carbs', image: 'pizza9.png', price: 0.0001 }],
 // },
 
-test("add item to menu", async () => {
+test("addMenuItem", async () => {
   const newMenuItem = {
     title: "testPizza",
     description: randomName(),
@@ -53,13 +53,13 @@ test("add item to menu", async () => {
     price: 0.1234,
   };
 
-  const res = await request(app)
+  const addMenuItemRes = await request(app)
     .put("/api/order/menu")
     .send(newMenuItem)
     .set("Authorization", `Bearer ${testAdmin_AuthToken}`);
 
-  expect(res.status).toBe(200);
-  expect(res.body).toEqual(
+  expect(addMenuItemRes.status).toBe(200);
+  expect(addMenuItemRes.body).toEqual(
     expect.arrayContaining([expect.objectContaining(newMenuItem)])
   );
 });
