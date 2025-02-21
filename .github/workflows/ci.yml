@@ -97,7 +97,7 @@ jobs:
       version: ${{ needs.build.outputs.version }}
 
     steps:
-      - name: Download distrubution artifact
+      - name: Download distribution artifact
         uses: actions/download-artifact@v4
         with:
           name: package
