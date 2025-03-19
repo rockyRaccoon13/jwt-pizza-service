@@ -1,6 +1,16 @@
 const config = require("./config");
 
 const requests = {};
+
+const endpointsLatency = {};
+
+let pizzaOrders = {
+  successCount: 0,
+  failureCount: 0,
+  revenue: 0,
+  latency: 0,
+};
+
 let userCount = 0;
 
 const os = require("os");
@@ -21,6 +31,28 @@ function getMemoryUsagePercentage() {
   const usedMemory = totalMemory - freeMemory;
   const memoryUsage = (usedMemory / totalMemory) * 100;
   return memoryUsage.toFixed(2);
+}
+
+function endpointLatencyTracker() {
+  return (req, res, next) => {
+    const path = req.path;
+    const startTime = new Date();
+    res.on("finish", () => {
+      if (req.route) {
+        const latency = new Date() - startTime;
+        endpointsLatency[path] = latency;
+        console.log(req.route.path);
+        console.log(`Latency: ${latency}ms ${path}`);
+        console.log(endpointsLatency);
+      } else {
+        const latency = new Date() - startTime;
+        endpointsLatency["UnknownEndpoint"] = latency;
+        console.log(`Unknown endpoint Latency: ${latency}ms ${path}`);
+      }
+    });
+
+    next();
+  };
 }
 
 function userTracker() {
@@ -79,6 +111,45 @@ function authTracker() {
   };
 }
 
+function pizzaTracker() {
+  return (req, res, next) => {
+    //   method: 'POST',
+    //   path: '/api/order',
+    //   requiresAuth: true,
+    //   description: 'Create a order for the authenticated user',
+    //   example: `curl -X POST localhost:3000/api/order -H 'Content-Type: application/json' -d '{"franchiseId": 1, "storeId":1, "items":[{ "menuId": 1, "description": "Veggie", "price": 0.05 }]}'  -H 'Authorization: Bearer tttttt'`,
+    //   response: { order: { franchiseId: 1, storeId: 1, items: [{ menuId: 1, description: 'Veggie', price: 0.05 }], id: 1 }, jwt: '1111111111' },
+    // },
+
+    const startTime = new Date();
+    if (req.path !== "/api/order" && req.method !== "POST") {
+      next();
+      return;
+    }
+
+    const originalSend = res.send;
+    res.send = function (body) {
+      if (res.statusCode === 200) {
+        pizzaOrders.successCount += 1;
+        const orderTotal = body.order.items.reduce(
+          (total, item) => total + item.price,
+          0
+        );
+        pizzaOrders.revenue += orderTotal;
+      } else {
+        pizzaOrders.failureCount += 1;
+      }
+
+      pizzaOrders.latency = new Date() - startTime;
+
+      res.send = originalSend; // Restore the original send method
+      return res.send(body); // Call the original send method
+    };
+
+    next();
+  };
+}
+
 function requestTracker() {
   return (req, res, next) => {
     requests[req.method] = (requests[req.method] || 0) + 1;
@@ -106,6 +177,26 @@ setInterval(() => {
     "1"
   );
 
+  sendMetricToGrafana(
+    "orders",
+    pizzaOrders["successCount"],
+    { success: "true" },
+    "sum",
+    "1"
+  );
+
+  sendMetricToGrafana(
+    "orders",
+    pizzaOrders["failureCount"],
+    { success: "false" },
+    "sum",
+    "1"
+  );
+
+  sendMetricToGrafana("orderLatency", pizzaOrders["latency"], {}, "sum", "ms");
+
+  sendMetricToGrafana("revenue", pizzaOrders["revenue"], {}, "sum", "bitcoin");
+
   Object.keys(requests).forEach((method) => {
     sendMetricToGrafana(
       "http_requests",
@@ -113,6 +204,16 @@ setInterval(() => {
       { method },
       "sum",
       "1"
+    );
+  });
+
+  Object.keys(endpointsLatency).forEach((endpoint) => {
+    sendMetricToGrafana(
+      "endpointLatency",
+      endpointsLatency[endpoint],
+      { endpoint },
+      "sum",
+      "ms"
     );
   });
 
@@ -200,4 +301,10 @@ function sendMetricToGrafana(metricName, metricValue, attributes, type, unit) {
     });
 }
 
-module.exports = { requestTracker, userTracker, authTracker };
+module.exports = {
+  requestTracker,
+  userTracker,
+  authTracker,
+  pizzaTracker,
+  endpointLatencyTracker,
+};

@@ -19,6 +19,8 @@ app.use((req, res, next) => {
 app.use(metrics.requestTracker());
 app.use(metrics.userTracker());
 app.use(metrics.authTracker());
+app.use(metrics.pizzaTracker());
+app.use(metrics.endpointLatencyTracker());
 
 const apiRouter = express.Router();
 app.use("/api", apiRouter);
