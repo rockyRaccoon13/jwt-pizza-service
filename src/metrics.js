@@ -1,8 +1,14 @@
 const config = require("./config");
 
 const requests = {};
+let userCount = 0;
 
 const os = require("os");
+
+const authChecks = {
+  passesCount: 0,
+  failsCount: 0,
+};
 
 function getCpuUsagePercentage() {
   const cpuUsage = os.loadavg()[0] / os.cpus().length;
@@ -17,13 +23,61 @@ function getMemoryUsagePercentage() {
   return memoryUsage.toFixed(2);
 }
 
-// This will periodically send metrics to Grafana
-// setInterval(() => {
-//   const cpuUsage = getCpuUsagePercentage();
-//   const memoryUsage = getMemoryUsagePercentage();
-//   sendMetricToGrafana("cpu", cpuUsage, {}, "gauge", "1");
-//   sendMetricToGrafana("memory", memoryUsage, {}, "gauge", "%");
-// }, 1000);
+function userTracker() {
+  return (req, res, next) => {
+    if (req.path !== "/api/auth") {
+      next();
+      return;
+    }
+
+    const isAddUser = req.method === "POST" || req.method === "PUT";
+    const originalSend = res.send;
+
+    res.send = function (body) {
+      if (res.statusCode === 200) {
+        if (isAddUser) {
+          //   console.log("LOGIN SUCCESS");
+          userCount += 1;
+        } else {
+          //   console.log("LOGOUT SUCCESS");
+          userCount -= 1;
+        }
+      } else {
+        // console.log("LOGIN/Out FAILED");
+      }
+
+      res.send = originalSend; // Restore the original send method
+      return res.send(body); // Call the original send method
+    };
+
+    next();
+  };
+}
+
+function authTracker() {
+  return (req, res, next) => {
+    if (req.path !== "/api/auth") {
+      next();
+      return;
+    }
+
+    const originalSend = res.send;
+
+    res.send = function (body) {
+      if (res.statusCode === 200) {
+        userCount += 1;
+      } else {
+        //   console.log("LOGOUT SUCCESS");
+        userCount -= 1;
+      }
+
+      res.send = originalSend; // Restore the original send method
+      return res.send(body); // Call the original send method
+    };
+
+    next();
+  };
+}
 
 function requestTracker() {
   return (req, res, next) => {
@@ -37,6 +91,21 @@ function requestTracker() {
 // This will periodically send metrics to Grafana
 // const timer =
 setInterval(() => {
+  sendMetricToGrafana(
+    "auth_checks",
+    authChecks.failsCount,
+    { passesAuth: "false" },
+    "sum",
+    "1"
+  );
+  sendMetricToGrafana(
+    "auth_checks",
+    authChecks.passesCount,
+    { passesAuth: "true" },
+    "sum",
+    "1"
+  );
+
   Object.keys(requests).forEach((method) => {
     sendMetricToGrafana(
       "http_requests",
@@ -47,10 +116,13 @@ setInterval(() => {
     );
   });
 
+  //   console.log(`User count: ${userCount}`);
+  sendMetricToGrafana("user_count", userCount.toString(), {}, "sum", "1");
+
   const cpuUsage = getCpuUsagePercentage();
   const memoryUsage = getMemoryUsagePercentage();
-  console.log(`CPU: ${cpuUsage}%`);
-  console.log(`Memory: ${memoryUsage}%`);
+  //   console.log(`CPU: ${cpuUsage}%`);
+  //   console.log(`Memory: ${memoryUsage}%`);
   sendMetricToGrafana("cpu", cpuUsage, {}, "gauge", "%");
   sendMetricToGrafana("memory", memoryUsage, {}, "gauge", "%");
 }, 1000);
@@ -124,8 +196,8 @@ function sendMetricToGrafana(metricName, metricValue, attributes, type, unit) {
       }
     })
     .catch((error) => {
-      console.error("Error pushing metrics:", error);
+      console.error("Error pushing metrics (${}):", error);
     });
 }
 
-module.exports = { requestTracker };
+module.exports = { requestTracker, userTracker, authTracker };
