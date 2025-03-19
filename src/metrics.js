@@ -4,6 +4,8 @@ const requests = {};
 
 const endpointsLatency = {};
 
+const invalidEndpoints = {};
+
 let pizzaOrders = {
   successCount: 0,
   failureCount: 0,
@@ -41,13 +43,22 @@ function endpointLatencyTracker() {
       if (req.route) {
         const latency = new Date() - startTime;
         endpointsLatency[path] = latency;
-        console.log(req.route.path);
-        console.log(`Latency: ${latency}ms ${path}`);
-        console.log(endpointsLatency);
-      } else {
-        const latency = new Date() - startTime;
-        endpointsLatency["UnknownEndpoint"] = latency;
-        console.log(`Unknown endpoint Latency: ${latency}ms ${path}`);
+        // console.log(req.route.path);
+        // console.log(`Latency: ${latency}ms ${path}`);
+        // console.log(endpointsLatency);
+      }
+    });
+
+    next();
+  };
+}
+
+function invalidEndpointsTracker() {
+  return (req, res, next) => {
+    const path = req.path;
+    res.on("finish", () => {
+      if (!req.route) {
+        invalidEndpoints[path] = (invalidEndpoints[path] || 0) + 1;
       }
     });
 
@@ -92,15 +103,13 @@ function authTracker() {
       next();
       return;
     }
-
     const originalSend = res.send;
-
     res.send = function (body) {
       if (res.statusCode === 200) {
-        userCount += 1;
+        authChecks.passesCount += 1;
       } else {
         //   console.log("LOGOUT SUCCESS");
-        userCount -= 1;
+        authChecks.failsCount += 1;
       }
 
       res.send = originalSend; // Restore the original send method
@@ -113,14 +122,6 @@ function authTracker() {
 
 function pizzaTracker() {
   return (req, res, next) => {
-    //   method: 'POST',
-    //   path: '/api/order',
-    //   requiresAuth: true,
-    //   description: 'Create a order for the authenticated user',
-    //   example: `curl -X POST localhost:3000/api/order -H 'Content-Type: application/json' -d '{"franchiseId": 1, "storeId":1, "items":[{ "menuId": 1, "description": "Veggie", "price": 0.05 }]}'  -H 'Authorization: Bearer tttttt'`,
-    //   response: { order: { franchiseId: 1, storeId: 1, items: [{ menuId: 1, description: 'Veggie', price: 0.05 }], id: 1 }, jwt: '1111111111' },
-    // },
-
     const startTime = new Date();
     if (req.path !== "/api/order" && req.method !== "POST") {
       next();
@@ -196,6 +197,16 @@ setInterval(() => {
   sendMetricToGrafana("orderLatency", pizzaOrders["latency"], {}, "sum", "ms");
 
   sendMetricToGrafana("revenue", pizzaOrders["revenue"], {}, "sum", "bitcoin");
+
+  Object.keys(invalidEndpoints).forEach((endpoint) => {
+    sendMetricToGrafana(
+      "invalid_endpoints_requests",
+      invalidEndpoints[endpoint],
+      { endpoint },
+      "sum",
+      "1"
+    );
+  });
 
   Object.keys(requests).forEach((method) => {
     sendMetricToGrafana(
@@ -307,4 +318,5 @@ module.exports = {
   authTracker,
   pizzaTracker,
   endpointLatencyTracker,
+  invalidEndpointsTracker,
 };
