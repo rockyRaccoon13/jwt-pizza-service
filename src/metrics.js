@@ -6,6 +6,8 @@ const endpointsLatency = {};
 
 const invalidEndpoints = {};
 
+const DEBUG = true;
+
 let pizzaOrders = {
   successCount: 0,
   failureCount: 0,
@@ -99,22 +101,29 @@ function userTracker() {
 
 function authTracker() {
   return (req, res, next) => {
-    if (req.path !== "/api/auth") {
-      next();
-      return;
-    }
-    const originalSend = res.send;
-    res.send = function (body) {
-      if (res.statusCode === 200) {
-        authChecks.passesCount += 1;
-      } else {
-        //   console.log("LOGOUT SUCCESS");
-        authChecks.failsCount += 1;
+    const path = req.path;
+
+    res.on("finish", () => {
+      if (req.requiresAuth !== true && path !== "/api/auth") {
+        console.log(`Path: ${path}, Auth: ${req.requiresAuth}`);
+        console.log("AUTH NOT REQUIRED");
+        return;
       }
 
-      res.send = originalSend; // Restore the original send method
-      return res.send(body); // Call the original send method
-    };
+      console.log("AUTH REQUIRED");
+      if (res.statusCode === 200) {
+        console.log("AUTH Passed");
+        authChecks.passesCount += 1;
+      } else if (
+        path === "/api/auth" ||
+        res.statusCode === 403 ||
+        res.statusCode === 401
+      ) {
+        console.log("AUTH Failed");
+
+        authChecks.failsCount += 1;
+      }
+    });
 
     next();
   };
@@ -304,7 +313,9 @@ function sendMetricToGrafana(metricName, metricValue, attributes, type, unit) {
           );
         });
       } else {
-        console.log(`Pushed ${metricName}`);
+        if (DEBUG !== true) {
+          console.log(`Pushed ${metricName}`);
+        }
       }
     })
     .catch((error) => {
