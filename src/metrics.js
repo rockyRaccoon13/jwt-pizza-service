@@ -69,7 +69,7 @@ function invalidEndpointsTracker() {
 
 function userTracker() {
   return (req, res, next) => {
-    if (req.path !== "/api/auth") {
+    if (req.path !== "/api/auth" || req.method === "OPTIONS") {
       next();
       return;
     }
@@ -131,7 +131,7 @@ function authTracker() {
 function pizzaTracker() {
   return (req, res, next) => {
     const startTime = new Date();
-    if (req.path !== "/api/order" && req.method !== "POST") {
+    if (req.path !== "/api/order" || req.method !== "POST") {
       next();
       return;
     }
