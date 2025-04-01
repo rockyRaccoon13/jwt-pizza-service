@@ -53,31 +53,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "type"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 82
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "authorized"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 108
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "method"
+              "options": "reqBody"
             },
             "properties": [
               {
@@ -89,12 +65,12 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "statusCode"
+              "options": "message"
             },
             "properties": [
               {
                 "id": "custom.width",
-                "value": 110
+                "value": 130
               }
             ]
           }
@@ -116,7 +92,12 @@
           "show": false
         },
         "showHeader": true,
-        "sortBy": []
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Time"
+          }
+        ]
       },
       "pluginVersion": "11.6.0-84846",
       "targets": [
@@ -127,12 +108,12 @@
           },
           "direction": "backward",
           "editorMode": "builder",
-          "expr": "{component=\"jwt-pizza-service\"} |= `` | json",
+          "expr": "{component=\"jwt-pizza-service\"} | json",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "New Panel",
+      "title": "Logs",
       "transformations": [
         {
           "id": "extractFields",
@@ -144,26 +125,32 @@
           "id": "organize",
           "options": {
             "includeByName": {
+              "Line": true,
               "Time": true,
               "authorized": true,
               "level": true,
+              "message": true,
               "method": true,
               "path": true,
+              "query": true,
               "reqBody": true,
               "resBody": true,
               "statusCode": true,
               "type": true
             },
             "indexByName": {
+              "Line": 11,
               "Time": 0,
-              "authorized": 2,
-              "level": 8,
-              "method": 3,
+              "authorized": 3,
+              "level": 1,
+              "message": 10,
+              "method": 4,
               "path": 5,
-              "reqBody": 6,
-              "resBody": 7,
-              "statusCode": 4,
-              "type": 1
+              "query": 9,
+              "reqBody": 7,
+              "resBody": 8,
+              "statusCode": 6,
+              "type": 2
             }
           }
         }
@@ -1410,12 +1397,12 @@
     "list": []
   },
   "time": {
-    "from": "now-5m",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "Pizza Service",
   "uid": "fegdbwdxv2m80d",
-  "version": 5
+  "version": 12
 }
