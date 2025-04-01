@@ -84,7 +84,9 @@ function userTracker() {
           userCount += 1;
         } else {
           //   console.log("LOGOUT SUCCESS");
-          userCount -= 1;
+          if (userCount > 0) {
+            userCount -= 1;
+          }
         }
       } else {
         // console.log("LOGIN/Out FAILED");
