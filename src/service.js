@@ -26,7 +26,6 @@ app.use(metrics.userTracker());
 app.use(metrics.authTracker());
 app.use(metrics.pizzaTracker());
 app.use(metrics.endpointLatencyTracker());
-app.use(metrics.invalidEndpointsTracker());
 
 const apiRouter = express.Router();
 app.use("/api", apiRouter);

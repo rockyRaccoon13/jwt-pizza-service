@@ -5,8 +5,6 @@ const http_requests = {};
 
 const endpointsLatency = {};
 
-const invalidEndpoints = {};
-
 let pizzaOrders = {
   successCount: 0,
   failureCount: 0,
@@ -47,19 +45,6 @@ function endpointLatencyTracker() {
         // console.log(req.route.path);
         // console.log(`Latency: ${latency}ms ${path}`);
         // console.log(endpointsLatency);
-      }
-    });
-
-    next();
-  };
-}
-
-function invalidEndpointsTracker() {
-  return (req, res, next) => {
-    const path = req.path;
-    res.on("finish", () => {
-      if (!req.route) {
-        invalidEndpoints[path] = (invalidEndpoints[path] || 0) + 1;
       }
     });
 
@@ -190,16 +175,6 @@ function httpMetrics(buf) {
       "ms"
     );
   });
-
-  Object.keys(invalidEndpoints).forEach((endpoint) => {
-    buf.addMetric(
-      "invalid_endpoints_requests",
-      invalidEndpoints[endpoint],
-      { endpoint },
-      "sum",
-      "1"
-    );
-  });
 }
 
 function systemMetrics(buf) {
@@ -286,9 +261,7 @@ function sendMetricsToGrafana(metricsJSON) {
     .then((response) => {
       if (!response.ok) {
         response.text().then((text) => {
-          console.error(
-            `Failed to push metrics data to Grafana: ${text}\n${body}`
-          );
+          console.error(`Failed to push metrics data to Grafana: ${text}\n`);
         });
       }
     })
@@ -305,5 +278,4 @@ module.exports = {
   authTracker,
   pizzaTracker,
   endpointLatencyTracker,
-  invalidEndpointsTracker,
 };
